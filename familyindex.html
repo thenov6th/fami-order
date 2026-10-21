@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FamilyMart Pre-Order & Pickup | 全家預購與取貨系統</title>
+  <!-- Tailwind CSS & HTML5 QR Scanner -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- QRCode.js for generating QR code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --fm-green: #00a040;
+      --fm-blue: #0066b2;
+    }
+    .bg-fm-green { background-color: var(--fm-green); }
+    .bg-fm-blue { background-color: var(--fm-blue); }
+    .text-fm-green { color: var(--fm-green); }
+    .text-fm-blue { color: var(--fm-blue); }
+    .border-fm-green { border-color: var(--fm-green); }
+    .fm-stripe {
+      height: 6px;
+      background: linear-gradient(90deg, #00a040 0%, #00a040 50%, #0066b2 50%, #0066b2 100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased min-h-screen pb-20">
+
+  <!-- Header Stripes & Navbar -->
+  <div class="fm-stripe"></div>
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <span class="bg-fm-green text-white font-bold text-xs px-2 py-1 rounded">FamilyMart</span>
+        <h1 class="font-bold text-lg text-gray-800 tracking-tight" id="app-title">全家預購專區</h1>
+      </div>
+      <!-- Language Toggle Button -->
+      <button onclick="toggleLanguage()" class="text-xs bg-gray-100 hover:bg-gray-200 border text-gray-700 px-2.5 py-1 rounded-full transition font-medium">
+        🌐 <span id="lang-btn-text">English</span>
+      </button>
+    </div>
+    <!-- Role Switch Tabs -->
+    <div class="flex border-t text-sm font-medium bg-gray-50">
+      <button id="tab-cust" onclick="switchRole('customer')" class="flex-1 py-2.5 text-center border-b-2 border-fm-green text-fm-green font-bold">
+        🛒 <span data-i18n="cust_tab">顧客預購</span>
+      </button>
+      <button id="tab-staff" onclick="switchRole('staff')" class="flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500">
+        📋 <span data-i18n="staff_tab">店員取貨驗證</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4">
+
+    <!-- ========================================== -->
+    <!-- 1. CUSTOMER VIEW (Giao diện Khách hàng)    -->
+    <!-- ========================================== -->
+    <section id="view-customer" class="space-y-4">
+      
+      <!-- Announcement Banner -->
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start space-x-3">
+        <span class="text-xl">📢</span>
+        <p class="text-xs text-emerald-800 leading-relaxed" data-i18n="cust_notice">
+          歡迎使用全家門市預購！請選擇商品與數量，下單後商品到店將發送取貨 QR Code。
+        </p>
+      </div>
+
+      <!-- Product List Header -->
+      <div class="flex justify-between items-center pt-2">
+        <h2 class="font-bold text-base text-gray-800" data-i18n="product_catalog">開放預購商品</h2>
+        <span class="text-xs text-gray-500" id="product-count">2 items</span>
+      </div>
+
+      <!-- Product Cards Container -->
+      <div id="product-list" class="space-y-3">
+        <!-- Demo Product Item 1 -->
+        <div class="bg-white rounded-xl p-3 shadow-sm border flex space-x-3 items-center">
+          <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200" alt="Bread" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-sm text-gray-800 truncate">初鹿爆漿菠蘿麵包</h3>
+            <p class="text-xs text-gray-500 mt-0.5">預購熱銷款 / 10/25 到店</p>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="font-extrabold text-fm-blue text-base">NT$ 35</span>
+              <!-- Quantity Selector -->
+              <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                <button onclick="updateQty(1, -1)" class="w-6 h-6 bg-white rounded shadow-sm text-gray-600 font-bold flex items-center justify-center">-</button>
+                <span id="qty-1" class="text-xs font-bold w-4 text-center">0</span>
+                <button onclick="updateQty(1, 1)" class="w-6 h-6 bg-fm-green text-white rounded shadow-sm font-bold flex items-center justify-center">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Demo Product Item 2 -->
+        <div class="bg-white rounded-xl p-3 shadow-sm border flex space-x-3 items-center">
+          <img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200" alt="Soup" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-sm text-gray-800 truncate">樂廚法式蘑菇濃湯</h3>
+            <p class="text-xs text-gray-500 mt-0.5">暖心濃湯包 (2入)</p>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="font-extrabold text-fm-blue text-base">NT$ 45</span>
+              <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                <button onclick="updateQty(2, -1)" class="w-6 h-6 bg-white rounded shadow-sm text-gray-600 font-bold flex items-center justify-center">-</button>
+                <span id="qty-2" class="text-xs font-bold w-4 text-center">0</span>
+                <button onclick="updateQty(2, 1)" class="w-6 h-6 bg-fm-green text-white rounded shadow-sm font-bold flex items-center justify-center">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Pre-order Button -->
+      <button onclick="submitOrder()" class="w-full bg-fm-green hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center space-x-2 mt-4">
+        <span>🛒</span>
+        <span data-i18n="btn_submit_order">確認預購下單</span>
+      </button>
+
+      <!-- Customer QR Code Section (My Pickup Code) -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border text-center mt-6">
+        <h3 class="font-bold text-sm text-gray-800 mb-1" data-i18n="my_qr_title">我的取貨 QR Code</h3>
+        <p class="text-xs text-gray-500 mb-3" data-i18n="my_qr_desc">商品到店後，請向門市人員出示此碼取貨</p>
+        <div id="qrcode" class="flex justify-center my-3"></div>
+        <span class="inline-block bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-mono font-medium" id="order-id-display">ORD-20261021-88</span>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2. STAFF VIEW (Giao diện Nhân viên)       -->
+    <!-- ========================================== -->
+    <section id="view-staff" class="space-y-4 hidden">
+      
+      <!-- Scanner Controls -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border text-center">
+        <button onclick="startScanner()" class="w-full bg-fm-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow flex items-center justify-center space-x-2">
+          <span>📷</span>
+          <span data-i18n="btn_scan_qr">開啟相機掃描 QR Code</span>
+        </button>
+        <div id="reader" class="mt-3 rounded-lg overflow-hidden hidden border"></div>
+      </div>
+
+      <!-- Manual Search Bar -->
+      <div class="relative">
+        <input type="text" id="search-input" onkeyup="filterOrders()" placeholder="搜尋 LINE 暱稱 / 商品名稱..." data-i18n-ph="search_ph" class="w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-fm-blue shadow-sm">
+        <span class="absolute right-3 top-3 text-gray-400">🔍</span>
+      </div>
+
+      <!-- Pending Orders List for Pickup Verification -->
+      <div class="space-y-3">
+        <h3 class="font-bold text-sm text-gray-700" data-i18n="pending_orders">待取貨訂單列表</h3>
+        
+        <!-- Order Item Card 1 -->
+        <div class="order-card bg-white rounded-xl p-4 shadow-sm border space-y-3">
+          <div class="flex justify-between items-start border-b pb-2">
+            <div>
+              <span class="font-bold text-sm text-gray-800">綿花糖泡泡 🫧</span>
+              <p class="text-xs text-gray-500">LINE ID: user_0192</p>
+            </div>
+            <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium" data-i18n="status_arrived">商品已到店</span>
+          </div>
+
+          <!-- Items Checklist -->
+          <div class="space-y-2">
+            <label class="flex items-center justify-between p-2 rounded-lg bg-gray-50 border cursor-pointer">
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" class="w-4 h-4 text-fm-green rounded focus:ring-fm-green">
+                <span class="text-xs font-medium text-gray-800">小葉蝦滑</span>
+              </div>
+              <span class="text-xs font-bold text-gray-600">x 1</span>
+            </label>
+
+            <label class="flex items-center justify-between p-2 rounded-lg bg-gray-50 border cursor-pointer">
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" class="w-4 h-4 text-fm-green rounded focus:ring-fm-green">
+                <span class="text-xs font-medium text-gray-800">初鹿爆漿菠蘿麵包</span>
+              </div>
+              <span class="text-xs font-bold text-gray-600">x 2</span>
+            </label>
+          </div>
+
+          <!-- Confirm Pickup Action Button -->
+          <button onclick="confirmStaffAction('綿花糖泡泡')" class="w-full bg-fm-green hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg shadow transition">
+            <span data-i18n="btn_confirm_pickup">確認核銷 / 勾選品項扣帳</span>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // 1. Language Dictionaries (Song ngữ Phồn thể & Tiếng Anh)
+    const i18n = {
+      'zh-TW': {
+        app_title: '全家預購與取貨專區',
+        cust_tab: '顧客預購',
+        staff_tab: '店員取貨驗證',
+        cust_notice: '歡迎使用全家門市預購！請選擇商品與數量，下單後商品到店將發送取貨 QR Code。',
+        product_catalog: '開放預購商品',
+        btn_submit_order: '確認預購下單',
+        my_qr_title: '我的取貨 QR Code',
+        my_qr_desc: '商品到店後，請向門市人員出示此碼取貨',
+        btn_scan_qr: '開啟相機掃描 QR Code',
+        search_ph: '搜尋 LINE 暱稱 / 商品名稱...',
+        pending_orders: '待取貨訂單列表',
+        status_arrived: '商品已到店',
+        btn_confirm_pickup: '確認核銷 / 勾選品項扣帳',
+        msg_order_success: '預購成功！請保存您的取貨 QR Code。',
+        msg_pickup_success: '取貨成功！已記錄經手店員與時間。'
+      },
+      'en': {
+        app_title: 'FamilyMart Pre-Order & Pickup',
+        cust_tab: 'Customer Order',
+        staff_tab: 'Staff Verification',
+        cust_notice: 'Welcome to FamilyMart Pre-order! Select item and quantity. You will receive a QR code once items arrive at store.',
+        product_catalog: 'Available Products',
+        btn_submit_order: 'Submit Pre-Order',
+        my_qr_title: 'My Pickup QR Code',
+        my_qr_desc: 'Present this QR code to store staff when collecting items.',
+        btn_scan_qr: 'Scan Customer QR Code',
+        search_ph: 'Search LINE Name / Item...',
+        pending_orders: 'Pending Pickup Orders',
+        status_arrived: 'Arrived at Store',
+        btn_confirm_pickup: 'Confirm Pickup for Selected Items',
+        msg_order_success: 'Order submitted! Please save your pickup QR Code.',
+        msg_pickup_success: 'Pickup confirmed! Staff name and timestamp recorded.'
+      }
+    };
+
+    let currentLang = 'zh-TW';
+    let currentRole = 'customer';
+    let html5QrcodeScanner = null;
+
+    // 2. Toggle Language
+    function toggleLanguage() {
+      currentLang = currentLang === 'zh-TW' ? 'en' : 'zh-TW';
+      document.getElementById('lang-btn-text').innerText = currentLang === 'zh-TW' ? 'English' : '繁體中文';
+      
+      // Update Texts
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+      });
+
+      // Update Placeholders
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (i18n[currentLang][key]) el.placeholder = i18n[currentLang][key];
+      });
+
+      document.getElementById('app-title').innerText = i18n[currentLang].app_title;
+    }
+
+    // 3. Switch Role Tabs (Customer / Staff)
+    function switchRole(role) {
+      currentRole = role;
+      const custView = document.getElementById('view-customer');
+      const staffView = document.getElementById('view-staff');
+      const tabCust = document.getElementById('tab-cust');
+      const tabStaff = document.getElementById('tab-staff');
+
+      if (role === 'customer') {
+        custView.classList.remove('hidden');
+        staffView.classList.add('hidden');
+        tabCust.className = "flex-1 py-2.5 text-center border-b-2 border-fm-green text-fm-green font-bold";
+        tabStaff.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500";
+        if (html5QrcodeScanner) stopScanner();
+      } else {
+        custView.classList.add('hidden');
+        staffView.classList.remove('hidden');
+        tabStaff.className = "flex-1 py-2.5 text-center border-b-2 border-fm-blue text-fm-blue font-bold";
+        tabCust.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500";
+      }
+    }
+
+    // 4. Update Quantity Selector
+    function updateQty(id, delta) {
+      const qtyEl = document.getElementById(`qty-${id}`);
+      let currentQty = parseInt(qtyEl.innerText);
+      currentQty = Math.max(0, currentQty + delta);
+      qtyEl.innerText = currentQty;
+    }
+
+    // 5. Submit Pre-order
+    function submitOrder() {
+      alert(i18n[currentLang].msg_order_success);
+      // Generate Demo QR Code for Customer
+      document.getElementById('qrcode').innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), {
+        text: "ORD-20261021-88",
+        width: 140,
+        height: 140,
+        colorDark: "#000000",
+        colorLight: "#ffffff"
+      });
+    }
+
+    // 6. Camera QR Code Scanner for Staff
+    function startScanner() {
+      const readerEl = document.getElementById('reader');
+      readerEl.classList.remove('hidden');
+      
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 200, height: 200 } },
+        (decodedText) => {
+          document.getElementById('search-input').value = decodedText;
+          filterOrders();
+          stopScanner();
+          alert(`Scanned Code / 掃描成功: ${decodedText}`);
+        },
+        (errorMessage) => { /* scanning... */ }
+      );
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          document.getElementById('reader').classList.add('hidden');
+        });
+      }
+    }
+
+    // 7. Filter Orders in Staff View
+    function filterOrders() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      document.querySelectorAll('.order-card').forEach(card => {
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(query) ? 'block' : 'none';
+      });
+    }
+
+    // 8. Confirm Staff Action
+    function confirmStaffAction(customerName) {
+      alert(`${i18n[currentLang].msg_pickup_success}\nCustomer: ${customerName}\nStaff ID: Staff_01`);
+    }
+
+    // Initialize Default QR Code
+    window.onload = function() {
+      new QRCode(document.getElementById("qrcode"), {
+        text: "ORD-20261021-88",
+        width: 130,
+        height: 130
+      });
+    };
+  </script>
+</body>
+</html>
