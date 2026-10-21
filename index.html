@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ANTI-CACHE META TAGS -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>便利團購 - Multi Store System</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,37 +29,39 @@
         <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
             <div class="flex items-center gap-2">
                 <h1 class="font-bold text-lg text-emerald-600">便利團購</h1>
-                <!-- Dynamic Role Badge -->
                 <span id="role-badge" class="hidden bg-emerald-100 text-emerald-800 badge-role">CUSTOMER</span>
             </div>
 
-            <!-- Store Selector & Language Toggle -->
             <div class="flex items-center gap-3">
-                <!-- Store Dropdown Container -->
                 <div id="store-selector-container" class="flex items-center">
                     <span id="store-badge" class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-                        🏪 載入門市中... / Loading store...
+                        🏪 載入門市中...
                     </span>
                 </div>
 
-                <!-- Language Switcher -->
                 <select id="lang-select" onchange="toggleLanguage(this.value)" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-600 focus:outline-none focus:border-emerald-500">
                     <option value="zh">繁體中文</option>
                     <option value="en">English</option>
                 </select>
             </div>
         </div>
-        <!-- User Status Sub-bar -->
-        <div class="max-w-4xl mx-auto mt-1 flex justify-between items-center text-[10px] text-gray-400">
-            <span id="user-line-id">Connecting LINE...</span>
-            <span id="managed-stores-notice"></span>
+
+        <!-- USER LINE ID & COPY BAR -->
+        <div class="max-w-4xl mx-auto mt-2 p-2 bg-slate-100 rounded-lg flex items-center justify-between text-xs border border-slate-200">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <span class="font-bold text-gray-600 whitespace-nowrap">👤 ID:</span>
+                <span id="user-line-id" class="font-mono text-gray-800 font-semibold truncate">Connecting LINE...</span>
+            </div>
+            <button id="btn-copy-id" onclick="copyLineUserId()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1 rounded transition-colors whitespace-nowrap shadow-sm">
+                📋 Copy ID
+            </button>
         </div>
     </header>
 
     <!-- MAIN CONTENT -->
     <main class="flex-grow max-w-4xl w-full mx-auto p-4">
         
-        <!-- ADMIN STORE CREATION PANEL (Visible to SUPER_ADMIN/SUPERVISOR) -->
+        <!-- ADMIN CREATION PANEL -->
         <div id="admin-create-store-panel" class="hidden bg-gradient-to-r from-emerald-800 to-teal-900 text-white rounded-xl shadow-md p-5 mb-5 border border-emerald-700">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="font-bold text-base flex items-center gap-2">
@@ -73,7 +80,7 @@
                     <input type="text" id="new-store-name" placeholder="vd: FamilyMart Bến Thành" class="w-full text-xs text-gray-800 p-2 rounded border focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 </div>
                 <div>
-                    <label class="block text-xs text-emerald-200 mb-1">LINE ID Tiệm Trưởng (Tùy chọn)</label>
+                    <label class="block text-xs text-emerald-200 mb-1">LINE ID Tiệm Trưởng</label>
                     <input type="text" id="new-store-manager" placeholder="LINE User ID" class="w-full text-xs text-gray-800 p-2 rounded border focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 </div>
             </div>
@@ -82,7 +89,6 @@
                 ➕ Tạo Cửa Hàng & Sinh Link LIFF Cho Tiệm Trưởng
             </button>
 
-            <!-- Generated URL Result Box -->
             <div id="generated-url-box" class="hidden mt-4 p-3 bg-emerald-950/80 rounded border border-emerald-600 text-xs">
                 <p class="text-emerald-300 font-semibold mb-1">✅ Link LIFF Dành Cho Cửa Hàng Này:</p>
                 <div class="flex items-center gap-2">
@@ -102,27 +108,18 @@
 
         <!-- Dynamic Content Grid -->
         <div id="app-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Loading Indicator -->
             <div class="col-span-full text-center py-12 text-gray-400">
                 <p id="ui-loading-text" class="text-sm">正在載入商品列表... / Loading products...</p>
             </div>
         </div>
     </main>
 
-    <!-- FOOTER -->
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
         &copy; 2026 FamilyMart Group Buying System. All Rights Reserved.
     </footer>
 
-    <!-- LOGIC SCRIPT -->
     <script>
-        // ==========================================
-        // CONFIGURATION
-        // ==========================================
-        // Replace with your Google Apps Script Web App URL
-        const API_URL = "https://script.google.com/macros/s/AKfycbxLUcgz3buzSzK--fRkkheozCPZr2G64yD0wZaq4hqYZHE3nJdAHVJpQtvWP9zWXqyXuA/exec"; 
-        
-        // PUBLISHED LIFF ID (Supports all users)
+        const API_URL = "https://script.google.com/macros/s/AKfycbzuFgUUGdJuoXZmk10-xKbVS2DXUwmbHTTZcqh-h1ZteQm582ZVE_ZWJX5yMmdvZ-yNxw/exec"; 
         const LIFF_ID = "2012142156-phvX28gQ"; 
 
         function isValidUrl(string) {
@@ -134,114 +131,96 @@
             }
         }
 
-        const MOCK_STORES = [
-            { id: "STORE_01", name: "FamilyMart 全家林森店" },
-            { id: "STORE_02", name: "FamilyMart 全家南京店" },
-            { id: "STORE_03", name: "FamilyMart 全家中山店" }
-        ];
-
-        const MOCK_PRODUCTS = [
-            { id: "PROD_01", name: "鮮乳坊嚴選鮮乳 936ml", price: 89, imageUrl: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300" },
-            { id: "PROD_02", name: "匠吐司 新香濃吐司", price: 39, imageUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300" },
-            { id: "PROD_03", name: "Let's Café 經典美式 (大杯)", price: 45, imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300" }
-        ];
-
         let currentLang = 'zh';
-        const i18n = {
-            zh: {
-                welcomeTitle: "歡迎使用便利團購",
-                welcomeDesc: "請選擇團購商品並送出訂單，門市人員將為您處理。",
-                loadingProducts: "正在載入商品列表...",
-                noProducts: "目前無上架商品",
-                connectingLine: "LINE 連線中...",
-                guestMode: "瀏覽模式 (未登入 LINE)"
-            },
-            en: {
-                welcomeTitle: "Welcome to Group Buying",
-                welcomeDesc: "Select group buying items and place your order.",
-                loadingProducts: "Loading products list...",
-                noProducts: "No products available currently.",
-                connectingLine: "Connecting LINE...",
-                guestMode: "Guest Mode (Not logged in)"
-            }
-        };
-
         let urlParams = new URLSearchParams(window.location.search);
         let storeId = urlParams.get('store') || 'STORE_01';
         let currentUserId = '';
+        let currentDisplayName = '';
         let currentUserRole = 'CUSTOMER';
         let availableStores = [];
 
-        function toggleLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('ui-welcome-title').innerText = i18n[currentLang].welcomeTitle;
-            document.getElementById('ui-welcome-desc').innerText = i18n[currentLang].welcomeDesc;
-            renderStoreSelector();
-            fetchProducts();
+        function copyLineUserId() {
+            if (!currentUserId) return;
+            navigator.clipboard.writeText(currentUserId).then(() => {
+                alert("📋 Đã sao chép LINE User ID thành công:\n" + currentUserId);
+            }).catch(err => {
+                const tempInput = document.createElement("input");
+                tempInput.value = currentUserId;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                alert("📋 Đã sao chép LINE User ID:\n" + currentUserId);
+            });
         }
 
-        async function createNewStoreAndGenerateUrl() {
-            const newStoreId = document.getElementById('new-store-id').value.trim();
-            const newStoreName = document.getElementById('new-store-name').value.trim();
-            const managerLineId = document.getElementById('new-store-manager').value.trim();
+        async function logAccessToBackend() {
+            if (!isValidUrl(API_URL) || !currentUserId) return;
+            try {
+                fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'logAccess',
+                        userId: currentUserId,
+                        displayName: currentDisplayName,
+                        storeId: storeId,
+                        role: currentUserRole
+                    })
+                });
+            } catch (e) {
+                console.error("Error logging access:", e);
+            }
+        }
 
-            if (!newStoreId || !newStoreName) {
-                alert("Vui lòng điền đầy đủ Mã Tiệm và Tên Tiệm!");
+        async function checkUserRole(userId) {
+            if (!isValidUrl(API_URL)) {
+                currentUserRole = 'SUPER_ADMIN';
+                document.getElementById('admin-create-store-panel').classList.remove('hidden');
+                fetchStoresAndRenderSelector({ userStoreId: 'ALL' });
+                fetchProducts();
+                logAccessToBackend();
                 return;
             }
 
-            const storeLiffUrl = `https://liff.line.me/${LIFF_ID}?store=${encodeURIComponent(newStoreId)}`;
-
-            if (isValidUrl(API_URL)) {
-                try {
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            action: 'addStore',
-                            storeId: newStoreId,
-                            storeName: newStoreName,
-                            managerLineId: managerLineId
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        alert("✅ Đã tạo cửa hàng thành công trong hệ thống Database!");
+            try {
+                const res = await fetch(`${API_URL}?action=checkPermission&userId=${userId}&storeId=${storeId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentUserRole = data.role;
+                    const badge = document.getElementById('role-badge');
+                    if (badge) {
+                        badge.innerText = currentUserRole;
+                        badge.classList.remove('hidden');
                     }
-                } catch (err) {
-                    console.error("Lỗi khi kết nối Google Apps Script:", err);
+                    if (['SUPER_ADMIN', 'SUPERVISOR'].includes(currentUserRole)) {
+                        document.getElementById('admin-create-store-panel').classList.remove('hidden');
+                    }
+                    fetchStoresAndRenderSelector(data);
+                    fetchProducts();
+                    logAccessToBackend();
                 }
+            } catch (err) {
+                console.error("Error checking permissions:", err);
+                fetchProducts();
             }
-
-            // Display generated LIFF Link
-            document.getElementById('generated-url-input').value = storeLiffUrl;
-            document.getElementById('generated-url-box').classList.remove('hidden');
-        }
-
-        function copyGeneratedUrl() {
-            const input = document.getElementById('generated-url-input');
-            input.select();
-            document.execCommand('copy');
-            alert("📋 Đã sao chép liên kết LIFF cửa hàng thành công!");
         }
 
         async function fetchStoresAndRenderSelector(userPermissions) {
             try {
                 if (!isValidUrl(API_URL)) {
-                    availableStores = MOCK_STORES;
                     renderStoreSelector(userPermissions);
                     return;
                 }
-
                 const res = await fetch(`${API_URL}?action=getStores`);
                 const data = await res.json();
-                
                 if (data.success && data.stores) {
                     availableStores = data.stores;
                     renderStoreSelector(userPermissions);
                 }
             } catch (err) {
-                console.error("Error fetching stores:", err);
-                availableStores = MOCK_STORES;
                 renderStoreSelector(userPermissions);
             }
         }
@@ -249,7 +228,6 @@
         function renderStoreSelector(userPermissions) {
             const container = document.getElementById('store-selector-container');
             if (!container) return;
-
             const isGlobalAdmin = ['SUPER_ADMIN', 'SUPERVISOR'].includes(currentUserRole);
             const userStoreList = userPermissions ? userPermissions.userStoreId || '' : '';
             const isMultiStoreManager = userStoreList.includes(',') || userStoreList === 'ALL';
@@ -264,7 +242,6 @@
                         selectHtml += `<option value="${s.id}" ${selected}>🏪 ${s.name} (${s.id})</option>`;
                     }
                 });
-                
                 selectHtml += `</select>`;
                 container.innerHTML = selectHtml;
             } else {
@@ -274,77 +251,22 @@
             }
         }
 
-        function switchStore(newStoreId) {
-            storeId = newStoreId;
-            urlParams.set('store', newStoreId);
-            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
-            if (currentUserId) {
-                checkUserRole(currentUserId);
-            } else {
-                fetchProducts();
-            }
-        }
-
-        async function checkUserRole(userId) {
-            if (!isValidUrl(API_URL)) {
-                currentUserRole = 'SUPER_ADMIN';
-                const badge = document.getElementById('role-badge');
-                if (badge) {
-                    badge.innerText = currentUserRole;
-                    badge.classList.remove('hidden');
-                }
-                document.getElementById('admin-create-store-panel').classList.remove('hidden');
-                fetchStoresAndRenderSelector({ userStoreId: 'ALL' });
-                fetchProducts();
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}?action=checkPermission&userId=${userId}&storeId=${storeId}`);
-                const data = await res.json();
-                
-                if (data.success) {
-                    currentUserRole = data.role;
-                    
-                    const badge = document.getElementById('role-badge');
-                    if (badge) {
-                        badge.innerText = currentUserRole;
-                        badge.classList.remove('hidden');
-                    }
-                    
-                    if (['SUPER_ADMIN', 'SUPERVISOR'].includes(currentUserRole)) {
-                        document.getElementById('admin-create-store-panel').classList.remove('hidden');
-                    }
-                    
-                    fetchStoresAndRenderSelector(data);
-                    fetchProducts();
-                }
-            } catch (err) {
-                console.error("Error checking permissions:", err);
-                fetchProducts();
-            }
-        }
-
         async function fetchProducts() {
             const contentDiv = document.getElementById('app-content');
-            
             if (!isValidUrl(API_URL)) {
-                renderProducts(MOCK_PRODUCTS);
+                contentDiv.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 text-sm">Demo Mode - No API Connected</div>`;
                 return;
             }
-
             try {
                 const res = await fetch(`${API_URL}?action=getProducts&storeId=${storeId}`);
                 const data = await res.json();
-                
                 if (data.success && data.products && data.products.length > 0) {
                     renderProducts(data.products);
                 } else {
-                    contentDiv.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 text-sm">${i18n[currentLang].noProducts}</div>`;
+                    contentDiv.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 text-sm">目前無上架商品</div>`;
                 }
             } catch (err) {
                 console.error("Error fetching products:", err);
-                renderProducts(MOCK_PRODUCTS);
             }
         }
 
@@ -358,21 +280,13 @@
                         <p class="text-emerald-600 font-extrabold text-sm mt-1">NT$ ${prod.price}</p>
                     </div>
                     <button class="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs py-2 rounded-lg transition-colors">
-                        ${currentLang === 'zh' ? '加入團購' : 'Add to Order'}
+                        加入團購
                     </button>
                 </div>
             `).join('');
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById('user-line-id').innerText = i18n[currentLang].connectingLine;
-            
-            if (!isValidUrl(API_URL)) {
-                document.getElementById('user-line-id').innerText = i18n[currentLang].guestMode + " (Preview)";
-                checkUserRole('MOCK_USER_ID');
-                return;
-            }
-
             liff.init({ liffId: LIFF_ID })
                 .then(() => {
                     if (!liff.isLoggedIn()) {
@@ -380,15 +294,18 @@
                     } else {
                         liff.getProfile().then(profile => {
                             currentUserId = profile.userId;
-                            document.getElementById('user-line-id').innerText = `ID: ${currentUserId.substring(0, 8)}...`;
+                            currentDisplayName = profile.displayName;
+                            
+                            document.getElementById('user-line-id').innerText = currentUserId;
+                            document.getElementById('btn-copy-id').classList.remove('hidden');
+
                             checkUserRole(currentUserId);
                         });
                     }
                 })
                 .catch(err => {
-                    console.warn("LIFF initialization fallback:", err);
-                    document.getElementById('user-line-id').innerText = i18n[currentLang].guestMode;
-                    fetchStoresAndRenderSelector(null);
+                    console.warn("LIFF fallback:", err);
+                    document.getElementById('user-line-id').innerText = "Guest Mode (Not in LINE)";
                     fetchProducts();
                 });
         });
