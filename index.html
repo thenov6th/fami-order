@@ -1,353 +1,252 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>FamilyMart Pre-Order & Pickup | 全家預購與取貨系統</title>
-  <!-- Tailwind CSS & HTML5 QR Scanner -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <!-- QRCode.js for generating QR code -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <style>
-    :root {
-      --fm-green: #00a040;
-      --fm-blue: #0066b2;
-    }
-    .bg-fm-green { background-color: var(--fm-green); }
-    .bg-fm-blue { background-color: var(--fm-blue); }
-    .text-fm-green { color: var(--fm-green); }
-    .text-fm-blue { color: var(--fm-blue); }
-    .border-fm-green { border-color: var(--fm-green); }
-    .fm-stripe {
-      height: 6px;
-      background: linear-gradient(90deg, #00a040 0%, #00a040 50%, #0066b2 50%, #0066b2 100%);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>便利團購 - Fami Order System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- LINE LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 antialiased min-h-screen pb-20">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
 
-  <!-- Header Stripes & Navbar -->
-  <div class="fm-stripe"></div>
-  <header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <span class="bg-fm-green text-white font-bold text-xs px-2 py-1 rounded">FamilyMart</span>
-        <h1 class="font-bold text-lg text-gray-800 tracking-tight" id="app-title">全家預購專區</h1>
-      </div>
-      <!-- Language Toggle Button -->
-      <button onclick="toggleLanguage()" class="text-xs bg-gray-100 hover:bg-gray-200 border text-gray-700 px-2.5 py-1 rounded-full transition font-medium">
-        🌐 <span id="lang-btn-text">English</span>
-      </button>
-    </div>
-    <!-- Role Switch Tabs -->
-    <div class="flex border-t text-sm font-medium bg-gray-50">
-      <button id="tab-cust" onclick="switchRole('customer')" class="flex-1 py-2.5 text-center border-b-2 border-fm-green text-fm-green font-bold">
-        🛒 <span data-i18n="cust_tab">顧客預購</span>
-      </button>
-      <button id="tab-staff" onclick="switchRole('staff')" class="flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500">
-        📋 <span data-i18n="staff_tab">店員取貨驗證</span>
-      </button>
-    </div>
-  </header>
-
-  <main class="max-w-md mx-auto p-4">
-
-    <!-- ========================================== -->
-    <!-- 1. CUSTOMER VIEW (Giao diện Khách hàng)    -->
-    <!-- ========================================== -->
-    <section id="view-customer" class="space-y-4">
-      
-      <!-- Announcement Banner -->
-      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start space-x-3">
-        <span class="text-xl">📢</span>
-        <p class="text-xs text-emerald-800 leading-relaxed" data-i18n="cust_notice">
-          歡迎使用全家門市預購！請選擇商品與數量，下單後商品到店將發送取貨 QR Code。
-        </p>
-      </div>
-
-      <!-- Product List Header -->
-      <div class="flex justify-between items-center pt-2">
-        <h2 class="font-bold text-base text-gray-800" data-i18n="product_catalog">開放預購商品</h2>
-        <span class="text-xs text-gray-500" id="product-count">2 items</span>
-      </div>
-
-      <!-- Product Cards Container -->
-      <div id="product-list" class="space-y-3">
-        <!-- Demo Product Item 1 -->
-        <div class="bg-white rounded-xl p-3 shadow-sm border flex space-x-3 items-center">
-          <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200" alt="Bread" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">
-          <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm text-gray-800 truncate">初鹿爆漿菠蘿麵包</h3>
-            <p class="text-xs text-gray-500 mt-0.5">預購熱銷款 / 10/25 到店</p>
-            <div class="mt-2 flex justify-between items-center">
-              <span class="font-extrabold text-fm-blue text-base">NT$ 35</span>
-              <!-- Quantity Selector -->
-              <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-                <button onclick="updateQty(1, -1)" class="w-6 h-6 bg-white rounded shadow-sm text-gray-600 font-bold flex items-center justify-center">-</button>
-                <span id="qty-1" class="text-xs font-bold w-4 text-center">0</span>
-                <button onclick="updateQty(1, 1)" class="w-6 h-6 bg-fm-green text-white rounded shadow-sm font-bold flex items-center justify-center">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Demo Product Item 2 -->
-        <div class="bg-white rounded-xl p-3 shadow-sm border flex space-x-3 items-center">
-          <img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200" alt="Soup" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">
-          <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-sm text-gray-800 truncate">樂廚法式蘑菇濃湯</h3>
-            <p class="text-xs text-gray-500 mt-0.5">暖心濃湯包 (2入)</p>
-            <div class="mt-2 flex justify-between items-center">
-              <span class="font-extrabold text-fm-blue text-base">NT$ 45</span>
-              <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-                <button onclick="updateQty(2, -1)" class="w-6 h-6 bg-white rounded shadow-sm text-gray-600 font-bold flex items-center justify-center">-</button>
-                <span id="qty-2" class="text-xs font-bold w-4 text-center">0</span>
-                <button onclick="updateQty(2, 1)" class="w-6 h-6 bg-fm-green text-white rounded shadow-sm font-bold flex items-center justify-center">+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Submit Pre-order Button -->
-      <button onclick="submitOrder()" class="w-full bg-fm-green hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center space-x-2 mt-4">
-        <span>🛒</span>
-        <span data-i18n="btn_submit_order">確認預購下單</span>
-      </button>
-
-      <!-- Customer QR Code Section (My Pickup Code) -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border text-center mt-6">
-        <h3 class="font-bold text-sm text-gray-800 mb-1" data-i18n="my_qr_title">我的取貨 QR Code</h3>
-        <p class="text-xs text-gray-500 mb-3" data-i18n="my_qr_desc">商品到店後，請向門市人員出示此碼取貨</p>
-        <div id="qrcode" class="flex justify-center my-3"></div>
-        <span class="inline-block bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-mono font-medium" id="order-id-display">ORD-20261021-88</span>
-      </div>
-
-    </section>
-
-    <!-- ========================================== -->
-    <!-- 2. STAFF VIEW (Giao diện Nhân viên)       -->
-    <!-- ========================================== -->
-    <section id="view-staff" class="space-y-4 hidden">
-      
-      <!-- Scanner Controls -->
-      <div class="bg-white rounded-xl p-4 shadow-sm border text-center">
-        <button onclick="startScanner()" class="w-full bg-fm-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow flex items-center justify-center space-x-2">
-          <span>📷</span>
-          <span data-i18n="btn_scan_qr">開啟相機掃描 QR Code</span>
-        </button>
-        <div id="reader" class="mt-3 rounded-lg overflow-hidden hidden border"></div>
-      </div>
-
-      <!-- Manual Search Bar -->
-      <div class="relative">
-        <input type="text" id="search-input" onkeyup="filterOrders()" placeholder="搜尋 LINE 暱稱 / 商品名稱..." data-i18n-ph="search_ph" class="w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-fm-blue shadow-sm">
-        <span class="absolute right-3 top-3 text-gray-400">🔍</span>
-      </div>
-
-      <!-- Pending Orders List for Pickup Verification -->
-      <div class="space-y-3">
-        <h3 class="font-bold text-sm text-gray-700" data-i18n="pending_orders">待取貨訂單列表</h3>
-        
-        <!-- Order Item Card 1 -->
-        <div class="order-card bg-white rounded-xl p-4 shadow-sm border space-y-3">
-          <div class="flex justify-between items-start border-b pb-2">
+    <!-- Header -->
+    <header class="bg-slate-900 text-white p-4 shadow-md">
+        <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
-              <span class="font-bold text-sm text-gray-800">綿花糖泡泡 🫧</span>
-              <p class="text-xs text-gray-500">LINE ID: user_0192</p>
+                <h1 id="txt-app-title" class="text-base font-bold">便利團購 <span class="text-xs font-normal text-emerald-400">Fami Order</span></h1>
+                <p id="store-badge" class="text-xs text-gray-400">載入商店中...</p>
             </div>
-            <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium" data-i18n="status_arrived">商品已到店</span>
-          </div>
+            <div class="flex items-center space-x-2">
+                <span id="user-role-badge" class="text-xs bg-slate-700 text-gray-200 px-2.5 py-1 rounded-full font-medium">驗證中...</span>
+                <button onclick="toggleLanguage()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 text-gray-200 px-2 py-1 rounded transition font-mono" id="lang-btn">EN</button>
+            </div>
+        </div>
+    </header>
 
-          <!-- Items Checklist -->
-          <div class="space-y-2">
-            <label class="flex items-center justify-between p-2 rounded-lg bg-gray-50 border cursor-pointer">
-              <div class="flex items-center space-x-2">
-                <input type="checkbox" class="w-4 h-4 text-fm-green rounded focus:ring-fm-green">
-                <span class="text-xs font-medium text-gray-800">小葉蝦滑</span>
-              </div>
-              <span class="text-xs font-bold text-gray-600">x 1</span>
-            </label>
-
-            <label class="flex items-center justify-between p-2 rounded-lg bg-gray-50 border cursor-pointer">
-              <div class="flex items-center space-x-2">
-                <input type="checkbox" class="w-4 h-4 text-fm-green rounded focus:ring-fm-green">
-                <span class="text-xs font-medium text-gray-800">初鹿爆漿菠蘿麵包</span>
-              </div>
-              <span class="text-xs font-bold text-gray-600">x 2</span>
-            </label>
-          </div>
-
-          <!-- Confirm Pickup Action Button -->
-          <button onclick="confirmStaffAction('綿花糖泡泡')" class="w-full bg-fm-green hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg shadow transition">
-            <span data-i18n="btn_confirm_pickup">確認核銷 / 勾選品項扣帳</span>
-          </button>
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto p-4 w-full flex-grow space-y-4">
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+            <p id="txt-loading" class="text-gray-500 text-sm mt-2">正在連接系統...</p>
         </div>
 
-      </div>
+        <!-- App Container -->
+        <div id="app-content" class="hidden space-y-4">
+            
+            <!-- Khu vực Khách hàng -->
+            <section id="customer-section" class="space-y-3">
+                <h2 id="txt-product-list-title" class="text-sm font-bold text-slate-700 uppercase tracking-wider">團購商品列表</h2>
+                <div id="product-list" class="space-y-2">
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold text-sm text-slate-800">範例商品 / Sample Item</h4>
+                            <p class="text-xs text-emerald-600 font-medium">$100 NTD</p>
+                        </div>
+                        <button onclick="orderItem()" id="btn-order" class="bg-emerald-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-emerald-700 transition">立即訂購</button>
+                    </div>
+                </div>
+            </section>
 
-    </section>
+            <!-- Khu vực Quản lý / Nhân viên -->
+            <section id="management-section" class="hidden space-y-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 id="txt-mgmt-title" class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b pb-2 text-emerald-700">營運與管理區</h3>
+                
+                <div id="staff-tools" class="hidden space-y-2">
+                    <button onclick="openQRScanner()" id="btn-scan" class="w-full bg-blue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">📷 掃描 QR Code 取貨</button>
+                </div>
 
-  </main>
+                <div id="admin-tools" class="hidden space-y-2 pt-1">
+                    <button onclick="toggleLockOrders()" id="btn-lock" class="w-full bg-amber-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-amber-700 transition">🔒 鎖定訂購 / 截止</button>
+                    <button onclick="manageStaff()" id="btn-staff-mgmt" class="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-semibold hover:bg-slate-900 transition">👥 門市店員管理</button>
+                </div>
+            </section>
+        </div>
+    </main>
 
-  <!-- JavaScript Logic -->
-  <script>
-    // 1. Language Dictionaries (Song ngữ Phồn thể & Tiếng Anh)
-    const i18n = {
-      'zh-TW': {
-        app_title: '全家預購與取貨專區',
-        cust_tab: '顧客預購',
-        staff_tab: '店員取貨驗證',
-        cust_notice: '歡迎使用全家門市預購！請選擇商品與數量，下單後商品到店將發送取貨 QR Code。',
-        product_catalog: '開放預購商品',
-        btn_submit_order: '確認預購下單',
-        my_qr_title: '我的取貨 QR Code',
-        my_qr_desc: '商品到店後，請向門市人員出示此碼取貨',
-        btn_scan_qr: '開啟相機掃描 QR Code',
-        search_ph: '搜尋 LINE 暱稱 / 商品名稱...',
-        pending_orders: '待取貨訂單列表',
-        status_arrived: '商品已到店',
-        btn_confirm_pickup: '確認核銷 / 勾選品項扣帳',
-        msg_order_success: '預購成功！請保存您的取貨 QR Code。',
-        msg_pickup_success: '取貨成功！已記錄經手店員與時間。'
-      },
-      'en': {
-        app_title: 'FamilyMart Pre-Order & Pickup',
-        cust_tab: 'Customer Order',
-        staff_tab: 'Staff Verification',
-        cust_notice: 'Welcome to FamilyMart Pre-order! Select item and quantity. You will receive a QR code once items arrive at store.',
-        product_catalog: 'Available Products',
-        btn_submit_order: 'Submit Pre-Order',
-        my_qr_title: 'My Pickup QR Code',
-        my_qr_desc: 'Present this QR code to store staff when collecting items.',
-        btn_scan_qr: 'Scan Customer QR Code',
-        search_ph: 'Search LINE Name / Item...',
-        pending_orders: 'Pending Pickup Orders',
-        status_arrived: 'Arrived at Store',
-        btn_confirm_pickup: 'Confirm Pickup for Selected Items',
-        msg_order_success: 'Order submitted! Please save your pickup QR Code.',
-        msg_pickup_success: 'Pickup confirmed! Staff name and timestamp recorded.'
-      }
-    };
+    <!-- Footer: Hiển thị LINE ID -->
+    <footer class="bg-white border-t border-gray-200 py-2.5 px-4 text-center text-xs text-gray-500">
+        <div class="max-w-md mx-auto flex items-center justify-center space-x-2">
+            <span class="text-gray-400">LINE ID:</span>
+            <span id="user-line-id" class="font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px]">Loading...</span>
+            <button onclick="copyLineId()" id="btn-copy" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-[11px] font-semibold transition">📋 Copy</button>
+        </div>
+    </footer>
 
-    let currentLang = 'zh-TW';
-    let currentRole = 'customer';
-    let html5QrcodeScanner = null;
+    <!-- Script Logic & Translations -->
+    <script>
+        // Từ điển ngôn ngữ (Traditional Chinese & English)
+        const translations = {
+            'zh': {
+                storePrefix: '商店代號：',
+                loading: '正在連接系統...',
+                productTitle: '團購商品列表',
+                orderBtn: '立即訂購',
+                mgmtTitle: '營運與管理區',
+                scanBtn: '📷 掃描 QR Code 取貨',
+                lockBtn: '🔒 鎖定訂購 / 截止',
+                staffMgmtBtn: '👥 門市店員管理',
+                copyBtn: '📋 複製',
+                roles: {
+                    SUPER_ADMIN: '超級管理員',
+                    STORE_ADMIN: '店長',
+                    STAFF: '店員',
+                    CUSTOMER: '顧客',
+                    verifying: '驗證中...'
+                },
+                alerts: {
+                    copied: '已複製 LINE ID: ',
+                    order: '訂購功能處理中！',
+                    scan: '開啟相機掃描取貨 QR Code。',
+                    lock: '切換訂購開放狀態。',
+                    staff: '管理店員 LINE ID 設定。'
+                }
+            },
+            'en': {
+                storePrefix: 'Store ID: ',
+                loading: 'Connecting to system...',
+                productTitle: 'Group Buying Products',
+                orderBtn: 'Order Now',
+                mgmtTitle: 'Management & Operations',
+                scanBtn: '📷 Scan QR Code',
+                lockBtn: '🔒 Lock / Close Orders',
+                staffMgmtBtn: '👥 Staff Management',
+                copyBtn: '📋 Copy',
+                roles: {
+                    SUPER_ADMIN: 'Super Admin',
+                    STORE_ADMIN: 'Store Admin',
+                    STAFF: 'Staff',
+                    CUSTOMER: 'Customer',
+                    verifying: 'Verifying...'
+                },
+                alerts: {
+                    copied: 'Copied LINE ID: ',
+                    order: 'Order processing!',
+                    scan: 'Open camera to scan pickup QR code.',
+                    lock: 'Toggle order status.',
+                    staff: 'Manage staff LINE IDs.'
+                }
+            }
+        };
 
-    // 2. Toggle Language
-    function toggleLanguage() {
-      currentLang = currentLang === 'zh-TW' ? 'en' : 'zh-TW';
-      document.getElementById('lang-btn-text').innerText = currentLang === 'zh-TW' ? 'English' : '繁體中文';
-      
-      // Update Texts
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
-      });
+        let currentLang = 'zh'; // Mặc định là Tiếng Trung Phồn thể
 
-      // Update Placeholders
-      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-        const key = el.getAttribute('data-i18n-ph');
-        if (i18n[currentLang][key]) el.placeholder = i18n[currentLang][key];
-      });
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('lang-btn').innerText = currentLang === 'zh' ? 'EN' : '中';
+            updateTexts();
+        }
 
-      document.getElementById('app-title').innerText = i18n[currentLang].app_title;
-    }
+        function updateTexts() {
+            const t = translations[currentLang];
+            document.getElementById('store-badge').innerText = t.storePrefix + storeId;
+            document.getElementById('txt-loading').innerText = t.loading;
+            document.getElementById('txt-product-list-title').innerText = t.productTitle;
+            document.getElementById('btn-order').innerText = t.orderBtn;
+            document.getElementById('txt-mgmt-title').innerText = t.mgmtTitle;
+            document.getElementById('btn-scan').innerText = t.scanBtn;
+            document.getElementById('btn-lock').innerText = t.lockBtn;
+            document.getElementById('btn-staff-mgmt').innerText = t.staffMgmtBtn;
+            document.getElementById('btn-copy').innerText = t.copyBtn;
 
-    // 3. Switch Role Tabs (Customer / Staff)
-    function switchRole(role) {
-      currentRole = role;
-      const custView = document.getElementById('view-customer');
-      const staffView = document.getElementById('view-staff');
-      const tabCust = document.getElementById('tab-cust');
-      const tabStaff = document.getElementById('tab-staff');
+            // Cập nhật lại nhãn vai trò nếu đã tải xong
+            if (window.userRole) {
+                updateRoleBadge(window.userRole);
+            }
+        }
 
-      if (role === 'customer') {
-        custView.classList.remove('hidden');
-        staffView.classList.add('hidden');
-        tabCust.className = "flex-1 py-2.5 text-center border-b-2 border-fm-green text-fm-green font-bold";
-        tabStaff.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500";
-        if (html5QrcodeScanner) stopScanner();
-      } else {
-        custView.classList.add('hidden');
-        staffView.classList.remove('hidden');
-        tabStaff.className = "flex-1 py-2.5 text-center border-b-2 border-fm-blue text-fm-blue font-bold";
-        tabCust.className = "flex-1 py-2.5 text-center border-b-2 border-transparent text-gray-500";
-      }
-    }
+        // 1. Đọc tham số 'store' từ URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeId = urlParams.get('store') || 'default_store';
+        document.getElementById('store-badge').innerText = translations[currentLang].storePrefix + storeId;
 
-    // 4. Update Quantity Selector
-    function updateQty(id, delta) {
-      const qtyEl = document.getElementById(`qty-${id}`);
-      let currentQty = parseInt(qtyEl.innerText);
-      currentQty = Math.max(0, currentQty + delta);
-      qtyEl.innerText = currentQty;
-    }
+        // 2. Cấu hình Backend URL
+        const backendMapping = {
+            'store_a': 'YOUR_APPS_SCRIPT_WEB_APP_URL_STORE_A',
+            'store_b': 'YOUR_APPS_SCRIPT_WEB_APP_URL_STORE_B',
+            'default_store': 'https://script.google.com/macros/s/AKfycb.../exec'
+        };
+        const currentBackendUrl = backendMapping[storeId] || backendMapping['default_store'];
 
-    // 5. Submit Pre-order
-    function submitOrder() {
-      alert(i18n[currentLang].msg_order_success);
-      // Generate Demo QR Code for Customer
-      document.getElementById('qrcode').innerHTML = "";
-      new QRCode(document.getElementById("qrcode"), {
-        text: "ORD-20261021-88",
-        width: 140,
-        height: 140,
-        colorDark: "#000000",
-        colorLight: "#ffffff"
-      });
-    }
+        // 3. Cấu hình LIFF ID
+        const LIFF_ID = 'YOUR_LIFF_ID'; 
 
-    // 6. Camera QR Code Scanner for Staff
-    function startScanner() {
-      const readerEl = document.getElementById('reader');
-      readerEl.classList.remove('hidden');
-      
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        (decodedText) => {
-          document.getElementById('search-input').value = decodedText;
-          filterOrders();
-          stopScanner();
-          alert(`Scanned Code / 掃描成功: ${decodedText}`);
-        },
-        (errorMessage) => { /* scanning... */ }
-      );
-    }
+        liff.init({ liffId: LIFF_ID })
+            .then(() => {
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    liff.getProfile().then(profile => {
+                        const userId = profile.userId;
+                        document.getElementById('user-line-id').innerText = userId;
+                        checkUserRole(userId);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('LIFF Error:', err);
+                document.getElementById('loading').innerHTML = '<p class="text-red-500 text-sm">LINE LIFF initialization failed.</p>';
+            });
 
-    function stopScanner() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().then(() => {
-          document.getElementById('reader').classList.add('hidden');
-        });
-      }
-    }
+        function copyLineId() {
+            const userIdText = document.getElementById('user-line-id').innerText;
+            if (userIdText && userIdText !== 'Loading...') {
+                navigator.clipboard.writeText(userIdText).then(() => {
+                    alert(translations[currentLang].alerts.copied + userIdText);
+                });
+            }
+        }
 
-    // 7. Filter Orders in Staff View
-    function filterOrders() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      document.querySelectorAll('.order-card').forEach(card => {
-        const text = card.innerText.toLowerCase();
-        card.style.display = text.includes(query) ? 'block' : 'none';
-      });
-    }
+        function checkUserRole(userId) {
+            fetch(`${currentBackendUrl}?action=checkPermission&userId=${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
 
-    // 8. Confirm Staff Action
-    function confirmStaffAction(customerName) {
-      alert(`${i18n[currentLang].msg_pickup_success}\nCustomer: ${customerName}\nStaff ID: Staff_01`);
-    }
+                    window.userRole = data.role || 'CUSTOMER';
+                    updateRoleBadge(window.userRole);
+                })
+                .catch(err => {
+                    console.error('Permission check error:', err);
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                });
+        }
 
-    // Initialize Default QR Code
-    window.onload = function() {
-      new QRCode(document.getElementById("qrcode"), {
-        text: "ORD-20261021-88",
-        width: 130,
-        height: 130
-      });
-    };
-  </script>
+        function updateRoleBadge(role) {
+            const t = translations[currentLang];
+            const roleBadge = document.getElementById('user-role-badge');
+            
+            if (role === 'SUPER_ADMIN') {
+                roleBadge.innerText = t.roles.SUPER_ADMIN;
+                roleBadge.className = 'text-xs bg-purple-600 text-white px-2.5 py-1 rounded-full font-medium';
+                document.getElementById('management-section').classList.remove('hidden');
+                document.getElementById('staff-tools').classList.remove('hidden');
+                document.getElementById('admin-tools').classList.remove('hidden');
+            } else if (role === 'STORE_ADMIN') {
+                roleBadge.innerText = t.roles.STORE_ADMIN;
+                roleBadge.className = 'text-xs bg-emerald-600 text-white px-2.5 py-1 rounded-full font-medium';
+                document.getElementById('management-section').classList.remove('hidden');
+                document.getElementById('staff-tools').classList.remove('hidden');
+                document.getElementById('admin-tools').classList.remove('hidden');
+            } else if (role === 'STAFF') {
+                roleBadge.innerText = t.roles.STAFF;
+                roleBadge.className = 'text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-medium';
+                document.getElementById('management-section').classList.remove('hidden');
+                document.getElementById('staff-tools').classList.remove('hidden');
+            } else {
+                roleBadge.innerText = t.roles.CUSTOMER;
+                roleBadge.className = 'text-xs bg-slate-700 text-gray-200 px-2.5 py-1 rounded-full font-medium';
+            }
+        }
+
+        function orderItem() { alert(translations[currentLang].alerts.order); }
+        function openQRScanner() { alert(translations[currentLang].alerts.scan); }
+        function toggleLockOrders() { alert(translations[currentLang].alerts.lock); }
+        function manageStaff() { alert(translations[currentLang].alerts.staff); }
+    </script>
 </body>
 </html>
