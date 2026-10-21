@@ -1,252 +1,346 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>便利團購 - Fami Order System</title>
+    <title>便利團購 - Mini App</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- LINE LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        .badge-role {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white p-4 shadow-md">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <div>
-                <h1 id="txt-app-title" class="text-base font-bold">便利團購 <span class="text-xs font-normal text-emerald-400">Fami Order</span></h1>
-                <p id="store-badge" class="text-xs text-gray-400">載入商店中...</p>
+    <!-- HEADER NAVIGATION & STORE SELECTOR -->
+    <header class="bg-white shadow-sm border-b border-gray-200 p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center gap-2">
+                <h1 class="font-bold text-lg text-emerald-600">便利團購</h1>
+                <!-- Dynamic Role Badge -->
+                <span id="role-badge" class="hidden bg-emerald-100 text-emerald-800 badge-role">CUSTOMER</span>
             </div>
-            <div class="flex items-center space-x-2">
-                <span id="user-role-badge" class="text-xs bg-slate-700 text-gray-200 px-2.5 py-1 rounded-full font-medium">驗證中...</span>
-                <button onclick="toggleLanguage()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 text-gray-200 px-2 py-1 rounded transition font-mono" id="lang-btn">EN</button>
+
+            <!-- Store Selector & Language Toggle -->
+            <div class="flex items-center gap-3">
+                <!-- Store Dropdown Container -->
+                <div id="store-selector-container" class="flex items-center">
+                    <span id="store-badge" class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                        🏪 載入門市中... / Loading store...
+                    </span>
+                </div>
+
+                <!-- Language Switcher -->
+                <select id="lang-select" onchange="toggleLanguage(this.value)" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-600 focus:outline-none focus:border-emerald-500">
+                    <option value="zh">繁體中文</option>
+                    <option value="en">English</option>
+                </select>
             </div>
+        </div>
+        <!-- User Status Sub-bar -->
+        <div class="max-w-4xl mx-auto mt-1 flex justify-between items-center text-[10px] text-gray-400">
+            <span id="user-line-id">Connecting LINE...</span>
+            <span id="managed-stores-notice"></span>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto p-4 w-full flex-grow space-y-4">
-        <!-- Loading State -->
-        <div id="loading" class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
-            <p id="txt-loading" class="text-gray-500 text-sm mt-2">正在連接系統...</p>
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4">
+        <!-- Banner / Welcome Card -->
+        <div class="bg-white rounded-xl shadow-sm p-5 mb-4 border border-gray-100">
+            <h2 id="ui-welcome-title" class="text-xl font-bold mb-1 text-gray-800">歡迎使用便利團購系統</h2>
+            <p id="ui-welcome-desc" class="text-gray-600 text-sm">請選擇團購商品並送出訂單，門市人員將為您處理。</p>
         </div>
 
-        <!-- App Container -->
-        <div id="app-content" class="hidden space-y-4">
-            
-            <!-- Khu vực Khách hàng -->
-            <section id="customer-section" class="space-y-3">
-                <h2 id="txt-product-list-title" class="text-sm font-bold text-slate-700 uppercase tracking-wider">團購商品列表</h2>
-                <div id="product-list" class="space-y-2">
-                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-semibold text-sm text-slate-800">範例商品 / Sample Item</h4>
-                            <p class="text-xs text-emerald-600 font-medium">$100 NTD</p>
-                        </div>
-                        <button onclick="orderItem()" id="btn-order" class="bg-emerald-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-emerald-700 transition">立即訂購</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Khu vực Quản lý / Nhân viên -->
-            <section id="management-section" class="hidden space-y-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 id="txt-mgmt-title" class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b pb-2 text-emerald-700">營運與管理區</h3>
-                
-                <div id="staff-tools" class="hidden space-y-2">
-                    <button onclick="openQRScanner()" id="btn-scan" class="w-full bg-blue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-blue-700 transition">📷 掃描 QR Code 取貨</button>
-                </div>
-
-                <div id="admin-tools" class="hidden space-y-2 pt-1">
-                    <button onclick="toggleLockOrders()" id="btn-lock" class="w-full bg-amber-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-amber-700 transition">🔒 鎖定訂購 / 截止</button>
-                    <button onclick="manageStaff()" id="btn-staff-mgmt" class="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-semibold hover:bg-slate-900 transition">👥 門市店員管理</button>
-                </div>
-            </section>
+        <!-- Dynamic Content Grid -->
+        <div id="app-content" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Loading Indicator -->
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <p id="ui-loading-text" class="text-sm">正在載入商品列表... / Loading products...</p>
+            </div>
         </div>
     </main>
 
-    <!-- Footer: Hiển thị LINE ID -->
-    <footer class="bg-white border-t border-gray-200 py-2.5 px-4 text-center text-xs text-gray-500">
-        <div class="max-w-md mx-auto flex items-center justify-center space-x-2">
-            <span class="text-gray-400">LINE ID:</span>
-            <span id="user-line-id" class="font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[11px]">Loading...</span>
-            <button onclick="copyLineId()" id="btn-copy" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-[11px] font-semibold transition">📋 Copy</button>
-        </div>
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
+        &copy; 2026 FamilyMart Group Buying System. All Rights Reserved.
     </footer>
 
-    <!-- Script Logic & Translations -->
+    <!-- LOGIC SCRIPT -->
     <script>
-        // Từ điển ngôn ngữ (Traditional Chinese & English)
-        const translations = {
-            'zh': {
-                storePrefix: '商店代號：',
-                loading: '正在連接系統...',
-                productTitle: '團購商品列表',
-                orderBtn: '立即訂購',
-                mgmtTitle: '營運與管理區',
-                scanBtn: '📷 掃描 QR Code 取貨',
-                lockBtn: '🔒 鎖定訂購 / 截止',
-                staffMgmtBtn: '👥 門市店員管理',
-                copyBtn: '📋 複製',
-                roles: {
-                    SUPER_ADMIN: '超級管理員',
-                    STORE_ADMIN: '店長',
-                    STAFF: '店員',
-                    CUSTOMER: '顧客',
-                    verifying: '驗證中...'
-                },
-                alerts: {
-                    copied: '已複製 LINE ID: ',
-                    order: '訂購功能處理中！',
-                    scan: '開啟相機掃描取貨 QR Code。',
-                    lock: '切換訂購開放狀態。',
-                    staff: '管理店員 LINE ID 設定。'
-                }
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        // Replace with your Google Apps Script Web App URL (must start with https://script.google.com/macros/s/...)
+        const API_URL = "https://script.google.com/macros/s/AKfycbwIblxoKtLalskT7vZ2aguw77t0J5puUIcjJvi78MJ0Waxkt0zrpspwZsTVpTF_BpmFRA/exec"; 
+        const LIFF_ID = "2012142156-phvX2";                  // Replace with your LINE LIFF ID
+
+        // Helper to check if API_URL is properly configured
+        function isValidUrl(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === "http:" || url.protocol === "https:";
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // Mock data fallback for preview & development when API_URL is not set
+        const MOCK_STORES = [
+            { id: "STORE_01", name: "FamilyMart 全家林森店" },
+            { id: "STORE_02", name: "FamilyMart 全家南京店" },
+            { id: "STORE_03", name: "FamilyMart 全家中山店" }
+        ];
+
+        const MOCK_PRODUCTS = [
+            { id: "PROD_01", name: "鮮乳坊嚴選鮮乳 936ml", price: 89, imageUrl: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300" },
+            { id: "PROD_02", name: "匠吐司 新香濃吐司", price: 39, imageUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300" },
+            { id: "PROD_03", name: "Let's Café 經典美式 (大杯)", price: 45, imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300" }
+        ];
+
+        // ==========================================
+        // TRANSLATIONS (i18n)
+        // ==========================================
+        let currentLang = 'zh';
+        const i18n = {
+            zh: {
+                welcomeTitle: "歡迎 sử dụng 便利團購",
+                welcomeDesc: "請選擇團購商品並送出訂單，門市人員將為您處理。",
+                loadingProducts: "正在載入商品列表...",
+                storePrefix: "門市：",
+                allStoresOption: "全部門市 (All Stores)",
+                selectStoreNotice: "切換門市",
+                noProducts: "目前無上架商品",
+                connectingLine: "LINE 連線中...",
+                guestMode: "瀏覽模式 (未登入 LINE)",
+                permissionDenied: "您沒有權限管理此門市"
             },
-            'en': {
-                storePrefix: 'Store ID: ',
-                loading: 'Connecting to system...',
-                productTitle: 'Group Buying Products',
-                orderBtn: 'Order Now',
-                mgmtTitle: 'Management & Operations',
-                scanBtn: '📷 Scan QR Code',
-                lockBtn: '🔒 Lock / Close Orders',
-                staffMgmtBtn: '👥 Staff Management',
-                copyBtn: '📋 Copy',
-                roles: {
-                    SUPER_ADMIN: 'Super Admin',
-                    STORE_ADMIN: 'Store Admin',
-                    STAFF: 'Staff',
-                    CUSTOMER: 'Customer',
-                    verifying: 'Verifying...'
-                },
-                alerts: {
-                    copied: 'Copied LINE ID: ',
-                    order: 'Order processing!',
-                    scan: 'Open camera to scan pickup QR code.',
-                    lock: 'Toggle order status.',
-                    staff: 'Manage staff LINE IDs.'
-                }
+            en: {
+                welcomeTitle: "Welcome to Group Buying",
+                welcomeDesc: "Select group buying items and place your order. Store staff will fulfill it.",
+                loadingProducts: "Loading products list...",
+                storePrefix: "Store: ",
+                allStoresOption: "All Stores",
+                selectStoreNotice: "Switch Store",
+                noProducts: "No products available currently.",
+                connectingLine: "Connecting LINE...",
+                guestMode: "Guest Mode (Not logged in)",
+                permissionDenied: "No permission to manage this store"
             }
         };
 
-        let currentLang = 'zh'; // Mặc định là Tiếng Trung Phồn thể
+        // State variables
+        let urlParams = new URLSearchParams(window.location.search);
+        let storeId = urlParams.get('store') || 'STORE_01';
+        let currentUserId = '';
+        let currentUserRole = 'CUSTOMER';
+        let availableStores = [];
 
-        function toggleLanguage() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            document.getElementById('lang-btn').innerText = currentLang === 'zh' ? 'EN' : '中';
-            updateTexts();
+        // ==========================================
+        // LANGUAGE & UI UPDATES
+        // ==========================================
+        function toggleLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('ui-welcome-title').innerText = i18n[currentLang].welcomeTitle;
+            document.getElementById('ui-welcome-desc').innerText = i18n[currentLang].welcomeDesc;
+            renderStoreSelector();
+            fetchProducts();
         }
 
-        function updateTexts() {
-            const t = translations[currentLang];
-            document.getElementById('store-badge').innerText = t.storePrefix + storeId;
-            document.getElementById('txt-loading').innerText = t.loading;
-            document.getElementById('txt-product-list-title').innerText = t.productTitle;
-            document.getElementById('btn-order').innerText = t.orderBtn;
-            document.getElementById('txt-mgmt-title').innerText = t.mgmtTitle;
-            document.getElementById('btn-scan').innerText = t.scanBtn;
-            document.getElementById('btn-lock').innerText = t.lockBtn;
-            document.getElementById('btn-staff-mgmt').innerText = t.staffMgmtBtn;
-            document.getElementById('btn-copy').innerText = t.copyBtn;
+        // ==========================================
+        // STORE SELECTOR ENGINE
+        // ==========================================
+        async function fetchStoresAndRenderSelector(userPermissions) {
+            try {
+                if (!isValidUrl(API_URL)) {
+                    console.warn("API_URL is not set or invalid. Using mock store data.");
+                    availableStores = MOCK_STORES;
+                    renderStoreSelector(userPermissions);
+                    return;
+                }
 
-            // Cập nhật lại nhãn vai trò nếu đã tải xong
-            if (window.userRole) {
-                updateRoleBadge(window.userRole);
+                const res = await fetch(`${API_URL}?action=getStores`);
+                const data = await res.json();
+                
+                if (data.success && data.stores) {
+                    availableStores = data.stores;
+                    renderStoreSelector(userPermissions);
+                }
+            } catch (err) {
+                console.error("Error fetching stores:", err);
+                availableStores = MOCK_STORES;
+                renderStoreSelector(userPermissions);
             }
         }
 
-        // 1. Đọc tham số 'store' từ URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const storeId = urlParams.get('store') || 'default_store';
-        document.getElementById('store-badge').innerText = translations[currentLang].storePrefix + storeId;
+        function renderStoreSelector(userPermissions) {
+            const container = document.getElementById('store-selector-container');
+            if (!container) return;
 
-        // 2. Cấu hình Backend URL
-        const backendMapping = {
-            'store_a': 'YOUR_APPS_SCRIPT_WEB_APP_URL_STORE_A',
-            'store_b': 'YOUR_APPS_SCRIPT_WEB_APP_URL_STORE_B',
-            'default_store': 'https://script.google.com/macros/s/AKfycb.../exec'
-        };
-        const currentBackendUrl = backendMapping[storeId] || backendMapping['default_store'];
+            // If user manages multiple stores or is SUPER_ADMIN/SUPERVISOR, display a Dropdown
+            const isGlobalAdmin = ['SUPER_ADMIN', 'SUPERVISOR'].includes(currentUserRole);
+            const userStoreList = userPermissions ? userPermissions.userStoreId || '' : '';
+            const isMultiStoreManager = userStoreList.includes(',') || userStoreList === 'ALL';
 
-        // 3. Cấu hình LIFF ID
-        const LIFF_ID = 'YOUR_LIFF_ID'; 
-
-        liff.init({ liffId: LIFF_ID })
-            .then(() => {
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
-                    liff.getProfile().then(profile => {
-                        const userId = profile.userId;
-                        document.getElementById('user-line-id').innerText = userId;
-                        checkUserRole(userId);
-                    });
-                }
-            })
-            .catch(err => {
-                console.error('LIFF Error:', err);
-                document.getElementById('loading').innerHTML = '<p class="text-red-500 text-sm">LINE LIFF initialization failed.</p>';
-            });
-
-        function copyLineId() {
-            const userIdText = document.getElementById('user-line-id').innerText;
-            if (userIdText && userIdText !== 'Loading...') {
-                navigator.clipboard.writeText(userIdText).then(() => {
-                    alert(translations[currentLang].alerts.copied + userIdText);
+            if ((isGlobalAdmin || isMultiStoreManager) && availableStores.length > 0) {
+                let allowedStoreIds = userStoreList.split(',').map(s => s.trim());
+                
+                let selectHtml = `<select id="header-store-select" onchange="switchStore(this.value)" class="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 focus:outline-none">`;
+                
+                availableStores.forEach(s => {
+                    // Show store option if user has global rights or specific rights to this store
+                    if (isGlobalAdmin || userStoreList === 'ALL' || allowedStoreIds.includes(s.id)) {
+                        const selected = s.id === storeId ? 'selected' : '';
+                        selectHtml += `<option value="${s.id}" ${selected}>🏪 ${s.name} (${s.id})</option>`;
+                    }
                 });
+                
+                selectHtml += `</select>`;
+                container.innerHTML = selectHtml;
+            } else {
+                // Single store display
+                const matchedStore = availableStores.find(s => s.id === storeId);
+                const storeDisplayName = matchedStore ? matchedStore.name : storeId;
+                container.innerHTML = `<span id="store-badge" class="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">🏪 ${storeDisplayName}</span>`;
             }
         }
 
-        function checkUserRole(userId) {
-            fetch(`${currentBackendUrl}?action=checkPermission&userId=${userId}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
+        function switchStore(newStoreId) {
+            storeId = newStoreId;
+            urlParams.set('store', newStoreId);
+            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+            
+            // Re-verify permission and refresh content
+            if (currentUserId) {
+                checkUserRole(currentUserId);
+            } else {
+                fetchProducts();
+            }
+        }
 
-                    window.userRole = data.role || 'CUSTOMER';
-                    updateRoleBadge(window.userRole);
+        // ==========================================
+        // DATA FETCHING & PERMISSIONS
+        // ==========================================
+        async function checkUserRole(userId) {
+            if (!isValidUrl(API_URL)) {
+                console.warn("API_URL is not set or invalid. Granting mock ADMIN role for preview.");
+                currentUserRole = 'SUPER_ADMIN';
+                const badge = document.getElementById('role-badge');
+                if (badge) {
+                    badge.innerText = currentUserRole;
+                    badge.classList.remove('hidden');
+                }
+                fetchStoresAndRenderSelector({ userStoreId: 'ALL' });
+                fetchProducts();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}?action=checkPermission&userId=${userId}&storeId=${storeId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentUserRole = data.role;
+                    
+                    // Update Role Badge UI
+                    const badge = document.getElementById('role-badge');
+                    if (badge) {
+                        badge.innerText = currentUserRole;
+                        badge.classList.remove('hidden');
+                    }
+                    
+                    // Load Stores & UI Selector based on permissions
+                    fetchStoresAndRenderSelector(data);
+                    
+                    // Fetch Store-specific products
+                    fetchProducts();
+                }
+            } catch (err) {
+                console.error("Error checking permissions:", err);
+                fetchProducts();
+            }
+        }
+
+        async function fetchProducts() {
+            const contentDiv = document.getElementById('app-content');
+            
+            if (!isValidUrl(API_URL)) {
+                console.warn("API_URL is not set or invalid. Rendering mock products.");
+                renderProducts(MOCK_PRODUCTS);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}?action=getProducts&storeId=${storeId}`);
+                const data = await res.json();
+                
+                if (data.success && data.products && data.products.length > 0) {
+                    renderProducts(data.products);
+                } else {
+                    contentDiv.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 text-sm">${i18n[currentLang].noProducts}</div>`;
+                }
+            } catch (err) {
+                console.error("Error fetching products:", err);
+                contentDiv.innerHTML = `<div class="col-span-full text-center py-8 text-red-400 text-sm">Failed to load data. Using offline list.</div>`;
+                renderProducts(MOCK_PRODUCTS);
+            }
+        }
+
+        function renderProducts(products) {
+            const contentDiv = document.getElementById('app-content');
+            contentDiv.innerHTML = products.map(prod => `
+                <div class="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                        <img src="${prod.imageUrl || 'https://via.placeholder.com/150'}" alt="${prod.name}" class="w-full h-36 object-cover rounded-md mb-3">
+                        <h3 class="font-bold text-gray-800">${prod.name}</h3>
+                        <p class="text-emerald-600 font-extrabold text-sm mt-1">NT$ ${prod.price}</p>
+                    </div>
+                    <button class="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs py-2 rounded-lg transition-colors">
+                        ${currentLang === 'zh' ? '加入團購' : 'Add to Order'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('user-line-id').innerText = i18n[currentLang].connectingLine;
+            
+            if (!isValidUrl(API_URL)) {
+                console.warn("Using Preview/Offline Mode because API_URL is not configured.");
+                document.getElementById('user-line-id').innerText = i18n[currentLang].guestMode + " (Preview Mode)";
+                checkUserRole('MOCK_USER_ID');
+                return;
+            }
+
+            liff.init({ liffId: LIFF_ID })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        liff.getProfile().then(profile => {
+                            currentUserId = profile.userId;
+                            document.getElementById('user-line-id').innerText = `ID: ${currentUserId.substring(0, 8)}...`;
+                            checkUserRole(currentUserId);
+                        });
+                    }
                 })
                 .catch(err => {
-                    console.error('Permission check error:', err);
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
+                    console.warn("LIFF initialization failed or running in external browser:", err);
+                    document.getElementById('user-line-id').innerText = i18n[currentLang].guestMode;
+                    fetchStoresAndRenderSelector(null);
+                    fetchProducts();
                 });
-        }
-
-        function updateRoleBadge(role) {
-            const t = translations[currentLang];
-            const roleBadge = document.getElementById('user-role-badge');
-            
-            if (role === 'SUPER_ADMIN') {
-                roleBadge.innerText = t.roles.SUPER_ADMIN;
-                roleBadge.className = 'text-xs bg-purple-600 text-white px-2.5 py-1 rounded-full font-medium';
-                document.getElementById('management-section').classList.remove('hidden');
-                document.getElementById('staff-tools').classList.remove('hidden');
-                document.getElementById('admin-tools').classList.remove('hidden');
-            } else if (role === 'STORE_ADMIN') {
-                roleBadge.innerText = t.roles.STORE_ADMIN;
-                roleBadge.className = 'text-xs bg-emerald-600 text-white px-2.5 py-1 rounded-full font-medium';
-                document.getElementById('management-section').classList.remove('hidden');
-                document.getElementById('staff-tools').classList.remove('hidden');
-                document.getElementById('admin-tools').classList.remove('hidden');
-            } else if (role === 'STAFF') {
-                roleBadge.innerText = t.roles.STAFF;
-                roleBadge.className = 'text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-medium';
-                document.getElementById('management-section').classList.remove('hidden');
-                document.getElementById('staff-tools').classList.remove('hidden');
-            } else {
-                roleBadge.innerText = t.roles.CUSTOMER;
-                roleBadge.className = 'text-xs bg-slate-700 text-gray-200 px-2.5 py-1 rounded-full font-medium';
-            }
-        }
-
-        function orderItem() { alert(translations[currentLang].alerts.order); }
-        function openQRScanner() { alert(translations[currentLang].alerts.scan); }
-        function toggleLockOrders() { alert(translations[currentLang].alerts.lock); }
-        function manageStaff() { alert(translations[currentLang].alerts.staff); }
+        });
     </script>
 </body>
 </html>
